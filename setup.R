@@ -3,11 +3,11 @@
 # We are using the daily CRAN snapshots from RStudio Package Manager: 
 # https://packagemanager.rstudio.com/client/#/repos/1/overview
 # Currently, we are using the snapshot from May 1, 2023:
-# https://packagemanager.rstudio.com/cran/2023-05-01
+# https://packagemanager.posit.co/cran/2023-08-09
 
 # Select the repo snapshot:
 options(repos = c(
-  REPO_NAME = "https://packagemanager.rstudio.com/cran/2023-05-01"
+  REPO_NAME = "https://packagemanager.posit.co/cran/2023-08-09"
   ))
 
 # Install renv
@@ -19,7 +19,8 @@ renv::init(bare = TRUE)
 
 # Install the packages
 install.packages(c(
-  "tidyverse", "dplyr", "stringr", "readr", "ggplot2"
+  "tidyverse", "dplyr", "stringr", "readr", "ggplot2",
+  "rvest"
   ))
 
 # Take a snapshot of the renv
