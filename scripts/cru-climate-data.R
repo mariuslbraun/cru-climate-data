@@ -52,7 +52,9 @@ for(i in 1:length(country_files$url)) {
     )
   }
 }
-rm(i)
+rm(i, file_path)
+
+
 
 # clean up country climate data ----
 tidy_climate_var = function(i) {
@@ -107,18 +109,35 @@ tidy_climate_var = function(i) {
   country_data_monthly$country = country_files$country[i]
   
   # convert types of variables
-  country_data_monthly$year = as.factor(country_data_monthly$year)
+  country_data_monthly$year = as.numeric(country_data_monthly$year)
   country_data_monthly$month = as.factor(country_data_monthly$month)
-  country_data_monthly$tmp = as.numeric(country_data_monthly$tmp)
-  country_data_monthly$tmp = ifelse(
-    country_data_monthly$tmp == -999.0,
-    NA,
-    country_data_monthly$tmp
-  )
+  country_data_monthly[climate_var][, 1] = as.numeric(
+    unlist(country_data_monthly[climate_var][, 1])
+    )
+  country_data_monthly[country_data_monthly == -999.0] = NA
   country_data_monthly$country = as.factor(country_data_monthly$country)
   
+  # calculate anomaly relative to 1901-2000 average
+  country_mean_1901_2000 = mean(
+    as.numeric(unlist((country_data_monthly %>%
+      filter(year >= 1901 & year <= 2000)
+     )[climate_var][, 1])), na.rm = T
+    )
+  country_sd_1901_2000 = sd(
+    as.numeric(unlist((country_data_monthly %>%
+       filter(year >= 1901 & year <= 2000)
+    )[climate_var][, 1])), na.rm = T
+  )
+  country_data_monthly$anom_1901_2000 = (
+    as.numeric(unlist(country_data_monthly[climate_var][, 1])) -
+      country_mean_1901_2000
+  ) / country_sd_1901_2000
+  
+  # return data frame
   return(country_data_monthly)
 }
+
+
 
 # iterate over country list ----
 
@@ -140,7 +159,9 @@ assign(
   )
 )
 
+# save data frame as RDS file
 saveRDS(
   get(df_name),
   file.path("prepared", paste0(df_name, ".rds"))
 )
+rm(df_name)
