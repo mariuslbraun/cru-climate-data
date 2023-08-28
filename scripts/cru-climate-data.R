@@ -17,7 +17,7 @@ source("scripts/functions.R")
 # download country climate data ----
 
 # set climate variable for which data should be retrieved
-climate_vars = c("tmp", "pre")
+climate_vars = c("pre", "tmn", "tmp", "tmx")
 
 for(j in 1:length(climate_vars)) {
   dir.create(file.path("raw", climate_vars[j]), showWarnings = F)
@@ -44,8 +44,6 @@ for(j in 1:length(climate_vars)) {
     }
   }
   lapply(1:length(country_files$url), download_country_files)
-  
-  
   
   # iterate over country list ----
   
