@@ -5,6 +5,7 @@ library(stringr)
 library(readr)
 library(ggplot2)
 library(rvest)
+library(sf)
 
 # clear workspace
 rm(list = ls())

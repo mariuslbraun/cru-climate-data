@@ -20,7 +20,7 @@ renv::init(bare = TRUE)
 # Install the packages
 install.packages(c(
   "tidyverse", "dplyr", "stringr", "readr", "ggplot2",
-  "rvest"
+  "rvest", "sf"
   ))
 
 # Take a snapshot of the renv
