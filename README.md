@@ -1,6 +1,6 @@
 # CRU climate data scraper
 
-This repo contains R code for scraping climate data from version 4.07 of the [CRU CY](https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/crucy.2304181636.v4.07/countries/) dataset (Harris et al. 2020).
+This repo contains R code for scraping climate data from version 4.07 of the [CRU CY](https://crudata.uea.ac.uk/cru/data/hrg/cru_ts_4.07/crucy.2304181636.v4.07/countries/) (Climatic Research Unit Country-Year) dataset created by the Climatic Research Unit at the University of East Anglia (Harris et al. 2020).
 The dataset contains area-weighted monthly country averages of a number of climatic variables for the period 1901-onwards.
 
 ## References
