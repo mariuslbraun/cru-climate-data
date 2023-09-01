@@ -20,8 +20,11 @@ renv::init(bare = TRUE)
 # Install the packages
 install.packages(c(
   "tidyverse", "dplyr", "stringr", "readr", "ggplot2",
-  "rvest", "sf", "magick"
+  "rvest", "sf", "png", "gifski"
   ))
+
+install.packages("https://cran.r-project.org/src/contrib/Archive/gganimate/gganimate_1.0.7.tar.gz", repos = NULL, type = "source")
+install.packages("https://cran.r-project.org/src/contrib/Archive/transformr/transformr_0.1.3.tar.gz", repos = NULL, type = "source")
 
 # Take a snapshot of the renv
 renv::snapshot()

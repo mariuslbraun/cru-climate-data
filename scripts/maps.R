@@ -6,7 +6,10 @@ library(readr)
 library(ggplot2)
 library(rvest)
 library(sf)
-library(magick)
+library(transformr)
+library(png)
+library(gifski)
+library(gganimate)
 
 # clear workspace
 rm(list = ls())
@@ -18,7 +21,7 @@ source("scripts/functions.R")
 
 # load shapefile ----
 country_shape = read_sf("raw/shapefile/WB_countries_Admin0_10m.shp") %>%
-  select(NAME_EN, geometry, ISO_A3_EH)
+  select(NAME_EN, geometry)
 country_shape$NAME_EN = str_replace_all(
   country_shape$NAME_EN, " ", "_"
 )
@@ -39,86 +42,77 @@ rm(i, lookup_country_names)
 
 # create maps of monthly climatic anomalies for 1901-2021 ----
 climate_var = "tmp"
-years = 1901:2021
-months = c("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+start_year = 2020
+end_year = 2021
 
-file_path = file.path("maps", climate_var)
-dir.create(file_path, showWarnings = F, recursive = T)
-for(i in 1:length(years)) {
-  for(j in 1:length(months)) {
-    df = readRDS(
-      file.path(
-        "prepared",
-        paste0(climate_var, "_data.rds")
-      )
-    ) %>% filter(
-      year == years[i],
-      month == months[j]
+# load climate data frame
+df = readRDS(
+  file.path(
+    "prepared",
+    paste0(climate_var, "_data.rds")
+  )
+) %>% filter(year >= start_year &
+             year <= end_year)
+
+# join climate data frame with geometry from shape file
+df = right_join(
+  df,
+  country_shape,
+  by = join_by(country == NAME_EN),
+  keep = TRUE
+)
+
+# add year-month column
+df = df %>%
+  mutate(month = recode(month,
+                        "JAN" = "01",
+                        "FEB" = "02",
+                        "MAR" = "03",
+                        "APR" = "04",
+                        "MAY" = "05",
+                        "JUN" = "06",
+                        "JUL" = "07",
+                        "AUG" = "08",
+                        "SEP" = "09",
+                        "OCT" = "10",
+                        "NOV" = "11",
+                        "DEC" = "12"
     )
-    
-    # join shapefile with climate data
-    country_shape_new = left_join(
-      country_shape,
-      df,
-      by = join_by(NAME_EN == country),
-      keep = FALSE
-    )
-    
-    # create map of climatic anomalies
-    ggplot(data = country_shape_new) +
-      geom_sf(aes(fill = anom_1901_2000)) +
-      scale_fill_viridis_c(option = "plasma", trans = "reverse") +
-      guides(fill=guide_legend(title="")) +
-      labs(
-        title = paste(climate_var, "anomaly relative to 1901-2000", sep = " "),
-        subtitle = paste(years[i], months[j], sep = " ")
-      )
-    theme_bw() +
-      theme(panel.grid.major = element_blank(),
-            axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks = element_blank())
-    anom_name = paste(
-      climate_var, "anom", years[i], months[j], sep = "_"
-    )
-    ggsave(
-      file.path(
-        file_path,
-        paste0(anom_name, ".png")
-      )
-    )
-  }
-}
-rm(i, j, anom_name)
+  )
+df$year_month = paste(
+  df$year,
+  df$month,
+  "01",
+  sep = "-"
+)
+df$year_month = as.Date(df$year_month)
 
+# convert data frame to sf object
+df = st_as_sf(df)
+df = df %>% select(-c(tmp, NAME_EN))
 
-
-# create animated GIF of climatic anomalies map ----
-# clear memory
-gc()
-
-## list file names and read in
-imgs = list.files(file_path, full.names = TRUE)
-img_list = lapply(imgs, image_read)
-
-## join the images together
-img_joined = image_join(img_list)
-
-## animate at 2 frames per second
-img_animated = image_animate(img_joined, fps = 5)
-
-## view animated image
-img_animated
-
-## save to disk
-image_write(
-  image = img_animated,
-  path = file.path(
-    file_path,
-    paste0(
-      climate_var,
-      "_anom_1901_2000_animated",
-      ".gif"
-    )
+# create map of climatic anomalies
+map_animated = ggplot(data = df) +
+  geom_sf(aes(fill = anom_1901_2000, geometry = geometry)) +
+  scale_fill_viridis_c(option = "plasma", trans = "reverse") +
+  guides(fill=guide_legend(title="")) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  transition_time(year_month) +
+  labs(
+    title = paste(climate_var, "anomaly relative to 1901-2000", sep = " "),
+    subtitle = "{format(frame_time, '%Y-%m')}"
+  ) +
+  coord_sf(default_crs = st_crs(df), datum = NA)
+animate(map_animated)
+anim_save(
+  file.path(
+    "maps",
+    paste0(climate_var, "_anom_map_animated.gif")
   )
 )
