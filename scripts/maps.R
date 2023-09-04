@@ -42,8 +42,16 @@ rm(i, lookup_country_names)
 
 # create maps of monthly climatic anomalies for 1901-2021 ----
 climate_var = "tmp"
-start_year = 2020
+start_year = 2000
 end_year = 2021
+
+climate_var_name = as.character(
+  (
+    read.csv("interim/lookup_varname.csv") %>%
+      filter(X...var_name == "tmp")
+    )$var_text
+)
+  
 
 # load climate data frame
 df = readRDS(
@@ -103,13 +111,13 @@ map_animated = ggplot(data = df) +
     axis.text.y = element_blank(),
     axis.ticks = element_blank()
   ) +
-  transition_time(year_month) +
+  transition_manual(frames = year_month) +
   labs(
-    title = paste(climate_var, "anomaly relative to 1901-2000", sep = " "),
-    subtitle = "{format(frame_time, '%Y-%m')}"
+    title = paste("Monthly", climate_var_name, "anomaly relative to 1901-2000", sep = " "),
+    subtitle = "{format(as.Date(current_frame), '%Y-%m')}"
   ) +
   coord_sf(default_crs = st_crs(df), datum = NA)
-animate(map_animated)
+animate(map_animated, fps = 2)
 anim_save(
   file.path(
     "maps",
